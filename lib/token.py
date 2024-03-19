@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from datetime import timedelta, datetime
 from jose import JWTError, jwt
 
-from schemas import TokenData
+from config.schemas import TokenData
 
 
 load_dotenv()
