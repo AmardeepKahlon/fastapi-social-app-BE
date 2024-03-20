@@ -17,7 +17,7 @@ class Post(PostBase):
         from_attributes = True
 
 class UserBase(BaseModel):
-    username: Optional[str] = None
+    name: Optional[str] = None
     email: str
 
 class UserCreate(UserBase):
@@ -31,7 +31,7 @@ class User(UserBase):
         from_attributes = True
   
 class Login(BaseModel):
-  username: str
+  email: str
   password: str
   
 class Token(BaseModel):
@@ -40,3 +40,10 @@ class Token(BaseModel):
   
 class TokenData(BaseModel):
   email: Optional[str] = None
+  id: Optional[int] = None
+  
+class CommentCreate(BaseModel):
+    content: str
+
+class LikeCreate(BaseModel):
+    pass
