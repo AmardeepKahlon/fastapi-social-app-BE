@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import auth, posts, comment, like
+from routers import auth, posts, comment, like, chats
 from config.database import engine
 from config import models
 
@@ -21,6 +21,7 @@ app.include_router(auth.router)
 app.include_router(posts.router)
 app.include_router(comment.router)
 app.include_router(like.router)
+app.include_router(chats.router)
 
 @app.get("/api")
 async def Hello():

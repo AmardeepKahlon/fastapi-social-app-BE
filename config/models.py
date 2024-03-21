@@ -12,6 +12,7 @@ class User(Base):
   posts = relationship("Post", back_populates="owner")
   comments = relationship("Comment", back_populates="owner")
   likes = relationship("Like", back_populates="owner")
+  chats = relationship("Chat", back_populates="owner", foreign_keys="Chat.sender_id",)
   
 class Post(Base):
   __tablename__ = 'posts'
@@ -40,3 +41,12 @@ class Like(Base):
   post_id = Column(Integer, ForeignKey("posts.id"))
   owner = relationship("User", back_populates="likes")
   like_post = relationship("Post", back_populates="likes")
+  
+class Chat(Base):
+  __tablename__ = 'chats'
+  id = Column(Integer, primary_key=True, index=True)
+  content = Column(String)
+  sender_id = Column(Integer, ForeignKey("users.id"))
+  receiver_id = Column(Integer, ForeignKey("users.id"))
+  owner = relationship("User", foreign_keys=[sender_id], back_populates="chats")
+  receiver = relationship("User", foreign_keys=[receiver_id], back_populates="chats")

@@ -19,6 +19,9 @@ class Post(PostBase):
 class UserBase(BaseModel):
     name: Optional[str] = None
     email: str
+    
+class ReceiverUser(BaseModel):
+    id: int
 
 class UserCreate(UserBase):
     # password: Optional[str] = None
@@ -47,7 +50,10 @@ class TokenData(BaseModel):
   id: Optional[int] = None
   
 class CommentCreate(BaseModel):
-    content: str
+  content: str
 
 class LikeCreate(BaseModel):
-    pass
+  pass
+  
+class ChatCreate(BaseModel):
+  content: str
