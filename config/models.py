@@ -22,6 +22,7 @@ class Post(Base):
   content = Column(String)
   url = Column(URLType)
   user_id = Column(Integer, ForeignKey("users.id"))
+  user_name = Column(String)
   owner = relationship("User", back_populates="posts")
   comments = relationship("Comment", back_populates="comment_post")
   likes = relationship("Like", back_populates="like_post")
@@ -32,9 +33,9 @@ class Comment(Base):
   content = Column(String)
   user_id = Column(Integer, ForeignKey("users.id"))
   post_id = Column(Integer, ForeignKey("posts.id"))
+  user_name = Column(String)
   owner = relationship("User", back_populates="comments")
   comment_post = relationship("Post", back_populates="comments")
-  
   
 class Like(Base):
   __tablename__ = 'likes'

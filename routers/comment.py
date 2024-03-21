@@ -13,7 +13,7 @@ def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depe
     post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-    db_comment = models.Comment(content=comment.content, user_id=current_user.id, post_id=post_id)
+    db_comment = models.Comment(content=comment.content, user_id=current_user.id, post_id=post_id, user_name=current_user.name)
     db.add(db_comment)
     db.commit()
     return {"message": "Comment added successfully"}

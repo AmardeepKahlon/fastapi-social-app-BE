@@ -16,7 +16,7 @@ def create_post(title:str, content:str, file: UploadFile = File(...), db: Sessio
     result = cloudinary.uploader.upload(file.file)
     print(result)
     url = result.get('url')
-    db_post = models.Post(title=title, content=content, user_id=current_user.id, url=url)
+    db_post = models.Post(title=title, content=content, user_id=current_user.id, url=url, user_name=current_user.name)
     db.add(db_post)
     db.commit()
     return {"message": "Post created successfully"}

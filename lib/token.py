@@ -28,10 +28,11 @@ def verify_token(token: str, credentials_exception):
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     # print(payload)
     email: str = payload.get("sub")
-    id: int = payload.get("id")
     if email is None:
       raise credentials_exception
-    token_data = TokenData(email=email, id=id)
+    name: str = payload.get("name")
+    id: int = payload.get("id")
+    token_data = TokenData(email=email, id=id, name=name)
   except JWTError as e:
     raise credentials_exception from e
   return token_data

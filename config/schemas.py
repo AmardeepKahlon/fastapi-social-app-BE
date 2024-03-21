@@ -48,6 +48,7 @@ class TokenBearer(BaseModel):
 class TokenData(BaseModel):
   email: Optional[str] = None
   id: Optional[int] = None
+  name: Optional[str] = None
   
 class CommentCreate(BaseModel):
   content: str
