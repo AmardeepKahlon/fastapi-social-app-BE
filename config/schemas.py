@@ -21,7 +21,7 @@ class UserBase(BaseModel):
     email: str
 
 class UserCreate(UserBase):
-    password: str
+    password: Optional[str] = None
 
 class User(UserBase):
     id: int
@@ -32,7 +32,7 @@ class User(UserBase):
   
 class Login(BaseModel):
   email: str
-  password: str
+  password: Optional[str] = None
   
 class Token(BaseModel):
   access_token: str
