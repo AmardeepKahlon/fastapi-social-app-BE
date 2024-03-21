@@ -38,6 +38,9 @@ class Token(BaseModel):
   access_token: str
   token_type: str
   
+class TokenBearer(BaseModel):
+  token: str
+  
 class TokenData(BaseModel):
   email: Optional[str] = None
   id: Optional[int] = None
