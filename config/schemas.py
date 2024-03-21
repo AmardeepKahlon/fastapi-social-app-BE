@@ -21,7 +21,8 @@ class UserBase(BaseModel):
     email: str
 
 class UserCreate(UserBase):
-    password: Optional[str] = None
+    # password: Optional[str] = None
+    pass
 
 class User(UserBase):
     id: int
