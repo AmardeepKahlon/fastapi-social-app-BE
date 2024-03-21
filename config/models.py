@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy_utils import URLType, EmailType
 
 from config.database import Base
 
@@ -7,7 +8,7 @@ class User(Base):
   __tablename__ = 'users'
   id = Column(Integer, primary_key=True, index=True)
   name = Column(String)
-  email = Column(String)
+  email = Column(EmailType)
   password = Column(String)
   posts = relationship("Post", back_populates="owner")
   comments = relationship("Comment", back_populates="owner")
@@ -19,6 +20,7 @@ class Post(Base):
   id = Column(Integer, primary_key=True, index=True)
   title = Column(String)
   content = Column(String)
+  url = Column(URLType)
   user_id = Column(Integer, ForeignKey("users.id"))
   owner = relationship("User", back_populates="posts")
   comments = relationship("Comment", back_populates="comment_post")

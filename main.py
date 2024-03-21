@@ -5,9 +5,22 @@ from routers import auth, posts, comment, like, chats
 from config.database import engine
 from config import models
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 app = FastAPI()
 
 models.Base.metadata.create_all(engine)
+
+import cloudinary
+          
+cloudinary.config( 
+  cloud_name = os.getenv('CLOUD_NAME'), 
+  api_key = os.getenv('API_KEY'),
+  api_secret = os.getenv('API_SECRET') 
+)
 
 app.add_middleware(
     CORSMiddleware,

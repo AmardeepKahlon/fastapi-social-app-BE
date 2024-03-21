@@ -1,16 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from config.database import get_db
 from config import models, schemas
 from lib.oauth2 import get_current_user
+
+import cloudinary.uploader
+
 
 router = APIRouter(
   tags=["Posts"]
 )
 
 @router.post("/create_post")
-def create_post(post: schemas.PostCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    db_post = models.Post(title=post.title, content=post.content, user_id=current_user.id)
+def create_post(title:str, content:str, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    result = cloudinary.uploader.upload(file.file)
+    print(result)
+    url = result.get('url')
+    db_post = models.Post(title=title, content=content, user_id=current_user.id, url=url)
     db.add(db_post)
     db.commit()
     return {"message": "Post created successfully"}
