@@ -26,7 +26,7 @@ def verify_token(token: str, credentials_exception):
   # sourcery skip: avoid-builtin-shadow
   try:
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    print(payload)
+    # print(payload)
     email: str = payload.get("sub")
     id: int = payload.get("id")
     if email is None:
