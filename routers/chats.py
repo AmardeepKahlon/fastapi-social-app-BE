@@ -22,7 +22,7 @@ def get_chats(db: Session = Depends(get_db)):
 
 @router.get("/chats/{sender_id}&{receiver_id}")
 def get_chat(sender_id: int, receiver_id: int, db: Session = Depends(get_db)):
-    if chat := db.query(models.Chat).filter((models.Chat.sender_id == sender_id & models.Chat.receiver_id == receiver_id) or (models.Chat.sender_id == receiver_id & models.Chat.receiver_id == sender_id)).all():
+    if chat := db.query(models.Chat).filter(models.Chat.sender_id == sender_id).filter(models.Chat.receiver_id == receiver_id).all():
         return chat
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")

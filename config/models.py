@@ -14,7 +14,7 @@ class User(Base):
   posts = relationship("Post", back_populates="owner")
   comments = relationship("Comment", back_populates="owner")
   likes = relationship("Like", back_populates="owner")
-  chats = relationship("Chat", back_populates="owner", foreign_keys="Chat.sender_id",)
+  chats = relationship("Chat", back_populates="sender", foreign_keys="Chat.sender_id",)
   
 class Post(Base):
   __tablename__ = 'posts'
@@ -60,7 +60,7 @@ class Chat(Base):
   post_id = Column(Integer, ForeignKey("posts.id"))
   comment_id = Column(Integer, ForeignKey("comments.id"))
   timestamp = Column(DateTime)
-  owner = relationship("User", foreign_keys=[sender_id], back_populates="chats")
+  sender = relationship("User", foreign_keys=[sender_id], back_populates="chats", lazy="joined")
   receiver = relationship("User", foreign_keys=[receiver_id], back_populates="chats")
   chat_post = relationship("Post", back_populates="chats")
   chat_comment = relationship("Comment", back_populates="chats")
