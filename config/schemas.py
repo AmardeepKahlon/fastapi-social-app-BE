@@ -3,8 +3,8 @@ from typing import List, Optional
 
     
 class PostBase(BaseModel):
-    title: str
     content: str
+    allow_comments: Optional[bool]
 
 class PostCreate(PostBase):
     pass
@@ -42,6 +42,9 @@ class Token(BaseModel):
   access_token: str
   token_type: str
   
+class ImageFile(BaseModel):
+  upload_file: bytes
+  
 class TokenBearer(BaseModel):
   token: str
   
@@ -51,10 +54,12 @@ class TokenData(BaseModel):
   name: Optional[str] = None
   
 class CommentCreate(BaseModel):
-  content: str
-
+  content: Optional[str] = None
+  parent_comment_id: Optional[int] = None
+  
 class LikeCreate(BaseModel):
   pass
   
 class ChatCreate(BaseModel):
-  content: str
+  post_id: Optional[int] = None
+  comment_id: Optional[int] = None

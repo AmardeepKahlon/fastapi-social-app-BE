@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from config.database import get_db
@@ -12,11 +13,11 @@ router = APIRouter(
 )
 
 @router.post("/create_post")
-def create_post(title:str, content:str, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+def create_post(allow_comments:bool, content:str, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     result = cloudinary.uploader.upload(file.file)
     print(result)
     url = result.get('secure_url')
-    db_post = models.Post(title=title, content=content, user_id=current_user.id, url=url, user_name=current_user.name)
+    db_post = models.Post(allow_comments=allow_comments, content=content, user_id=current_user.id, url=url, user_name=current_user.name, post_time=datetime.now())
     db.add(db_post)
     db.commit()
     return {"message": "Post created successfully"}

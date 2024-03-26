@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from datetime import datetime
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy_utils import URLType, EmailType
 
@@ -18,14 +19,16 @@ class User(Base):
 class Post(Base):
   __tablename__ = 'posts'
   id = Column(Integer, primary_key=True, index=True)
-  title = Column(String)
   content = Column(String)
   url = Column(URLType)
   user_id = Column(Integer, ForeignKey("users.id"))
   user_name = Column(String)
+  allow_comments = Column(Boolean, default=True)
+  post_time = Column(DateTime)
   owner = relationship("User", back_populates="posts")
   comments = relationship("Comment", back_populates="comment_post")
   likes = relationship("Like", back_populates="like_post")
+  chats = relationship("Chat", back_populates="chat_post")
   
 class Comment(Base):
   __tablename__ = 'comments'
@@ -34,8 +37,12 @@ class Comment(Base):
   user_id = Column(Integer, ForeignKey("users.id"))
   post_id = Column(Integer, ForeignKey("posts.id"))
   user_name = Column(String)
+  approved_comment = Column(Boolean, default=True)
+  time_posted = Column(DateTime)
+  parent_comment_id = Column(Integer)
   owner = relationship("User", back_populates="comments")
   comment_post = relationship("Post", back_populates="comments")
+  chats = relationship("Chat", back_populates="chat_comment")
   
 class Like(Base):
   __tablename__ = 'likes'
@@ -48,8 +55,13 @@ class Like(Base):
 class Chat(Base):
   __tablename__ = 'chats'
   id = Column(Integer, primary_key=True, index=True)
-  content = Column(String)
   sender_id = Column(Integer, ForeignKey("users.id"))
   receiver_id = Column(Integer, ForeignKey("users.id"))
+  post_id = Column(Integer, ForeignKey("posts.id"))
+  comment_id = Column(Integer, ForeignKey("comments.id"))
+  timestamp = Column(DateTime)
   owner = relationship("User", foreign_keys=[sender_id], back_populates="chats")
   receiver = relationship("User", foreign_keys=[receiver_id], back_populates="chats")
+  chat_post = relationship("Post", back_populates="chats")
+  chat_comment = relationship("Comment", back_populates="chats")
+  
