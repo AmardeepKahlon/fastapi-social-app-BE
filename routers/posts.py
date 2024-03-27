@@ -12,6 +12,7 @@ router = APIRouter(
   tags=["Posts"]
 )
 
+# Create a new post API endpoint
 @router.post("/create_post")
 def create_post(allow_comments:bool, content:str, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     result = cloudinary.uploader.upload(file.file)
@@ -22,10 +23,12 @@ def create_post(allow_comments:bool, content:str, file: UploadFile = File(...), 
     db.commit()
     return {"message": "Post created successfully"}
 
+# Get all posts API endpoint
 @router.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     return db.query(models.Post).all()
 
+# Get one specific post API endpoint
 @router.get("/posts/{post_id}")
 def get_post(post_id: int, db: Session = Depends(get_db)):
     if post := db.query(models.Post).filter(models.Post.id == post_id).first():

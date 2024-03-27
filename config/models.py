@@ -42,15 +42,15 @@ class Comment(Base):
   parent_comment_id = Column(Integer)
   owner = relationship("User", back_populates="comments")
   comment_post = relationship("Post", back_populates="comments")
-  chats = relationship("Chat", back_populates="chat_comment")
+  chats = relationship("Chat", back_populates="chat_comment", lazy="joined")
   
 class Like(Base):
   __tablename__ = 'likes'
   id = Column(Integer, primary_key=True, index=True)
   user_id = Column(Integer, ForeignKey("users.id"))
   post_id = Column(Integer, ForeignKey("posts.id"))
-  owner = relationship("User", back_populates="likes")
-  like_post = relationship("Post", back_populates="likes")
+  owner = relationship("User", back_populates="likes", lazy="joined")
+  like_post = relationship("Post", back_populates="likes", lazy="joined")
   
 class Chat(Base):
   __tablename__ = 'chats'
@@ -61,7 +61,7 @@ class Chat(Base):
   comment_id = Column(Integer, ForeignKey("comments.id"))
   timestamp = Column(DateTime)
   sender = relationship("User", foreign_keys=[sender_id], back_populates="chats", lazy="joined")
-  receiver = relationship("User", foreign_keys=[receiver_id], back_populates="chats")
-  chat_post = relationship("Post", back_populates="chats")
-  chat_comment = relationship("Comment", back_populates="chats")
+  receiver = relationship("User", foreign_keys=[receiver_id], back_populates="chats", lazy="joined")
+  chat_post = relationship("Post", back_populates="chats", lazy="joined")
+  chat_comment = relationship("Comment", back_populates="chats", lazy="joined")
   
