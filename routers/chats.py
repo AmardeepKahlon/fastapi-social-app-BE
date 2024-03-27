@@ -1,6 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from config.database import get_db
 from config import models, schemas
 from lib.oauth2 import get_current_user
@@ -19,20 +19,55 @@ def create_chat(chat: schemas.ChatCreate, receiver: schemas.ReceiverUser, db: Se
 
 # Get list of all chats API endpoint
 @router.get("/chats")
-def get_chats(db: Session = Depends(get_db)):
-    return db.query(models.Chat).all()
-
-@router.get("/chats/{sender_id}")
 def get_chats(sender_id: int, db: Session = Depends(get_db)):
-    if chat := db.query(models.Chat).filter(models.Chat.sender_id == sender_id).order_by(models.Chat.id.desc()).first():
-        return chat
+    if (
+        chats := db.query(models.Chat)
+        .filter(
+            (models.Chat.sender_id == sender_id)
+            | (models.Chat.receiver_id == sender_id)
+        )
+        .options(
+            joinedload(models.Chat.sender), joinedload(models.Chat.receiver)
+        )
+        .all()
+    ):
+        return [
+            {
+                "id": chat.id,
+                "sender": chat.sender,
+                "receiver": chat.receiver,
+                "timestamp": chat.timestamp
+            }
+            for chat in chats
+        ]
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")
 
 # Get list of specific chats API endpoint
-@router.get("/chats/{sender_id}&{receiver_id}")
+@router.get("/chats/content")
 def get_chat(sender_id: int, receiver_id: int, db: Session = Depends(get_db)):
-    if chat := db.query(models.Chat).filter(models.Chat.sender_id == sender_id).filter(models.Chat.receiver_id == receiver_id).all():
-        return chat
+    if (
+        chats := db.query(models.Chat)
+        .filter(
+            (
+                (models.Chat.sender_id == sender_id)
+                & (models.Chat.receiver_id == receiver_id)
+            )
+            | (
+                (models.Chat.sender_id == receiver_id)
+                & (models.Chat.receiver_id == sender_id)
+            )
+        )
+        .all()
+    ):
+        return [
+            {
+                "id": chat.id,
+                "post": chat.chat_post,
+                "comment": chat.chat_comment,
+                "timestamp": chat.timestamp,
+            }
+            for chat in chats
+        ]
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")
+        raise HTTPException(status_code=404, detail="Chat not found")

@@ -63,7 +63,7 @@ def approve_as_comment(comment_id: int, comment: schemas.CommentApproveAsComment
 
 @router.get("/posts/{post_id}/comments")
 def get_comments(post_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Comment).filter(models.Comment.post_id == post_id).all()
+    return db.query(models.Comment).filter(models.Comment.post_id == post_id).filter(models.Comment.approved_comment == True).all()
 
 @router.get("/parent_comment/{parent_comment_id}/comments")
 def get_comment_reply(comment_id: int, db: Session = Depends(get_db)):
