@@ -9,7 +9,7 @@ router = APIRouter(
   tags=["Comment"]
 )
 
-@router.post("/posts/{post_id}/comments")
+@router.post("/posts/comment")
 def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if not post:
@@ -53,7 +53,7 @@ def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depe
         "chat_data": response
     }
 
-@router.put("/comment/{comment_id}/approve")
+@router.put("/comment/approve")
 def comment_approve(comment_id: int, comment: schemas.CommentApprove, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     db_comment = db.query(models.Comment).filter(models.Comment.id == comment_id).first()
     if not db_comment:
@@ -68,7 +68,7 @@ def comment_approve(comment_id: int, comment: schemas.CommentApprove, db: Sessio
     db.commit()
     return {"message": "Comment approved successfully"}
 
-@router.post("/comment/{comment_id}/approve_as_comment")
+@router.post("/comment/approve_as_comment")
 def approve_as_comment(comment_id: int, comment: schemas.CommentApproveAsComment, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     db_comment = db.query(models.Comment).filter(models.Comment.id == comment_id).first()
     if not db_comment:
@@ -87,7 +87,7 @@ def approve_as_comment(comment_id: int, comment: schemas.CommentApproveAsComment
     return {"message": "Comment approved successfully"}
 
 
-@router.get("/posts/{post_id}/comments")
+@router.get("/posts/comments")
 def get_comments(post_id: int, db: Session = Depends(get_db)):
     top_level_comments = db.query(models.Comment)\
                            .filter(models.Comment.post_id == post_id)\
@@ -105,7 +105,7 @@ def get_comments(post_id: int, db: Session = Depends(get_db)):
 
     return top_level_comments
 
-@router.get("/parent_comment/{parent_comment_id}/comments")
-def get_comment_reply(comment_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Comment).filter(models.Comment.parent_comment_id == comment_id).filter(models.Comment.approved_comment == True).all()
+@router.get("/comment/reply")
+def get_comment_reply(parent_comment_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Comment).filter(models.Comment.parent_comment_id == parent_comment_id).filter(models.Comment.approved_comment == True).all()
     
