@@ -20,13 +20,34 @@ def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depe
     db_comment = models.Comment(content=comment.content, approved_comment=approved_comment, parent_comment_id=comment.parent_comment_id, user_id=current_user.id, post_id=post_id, user_name=current_user.name, time_posted=datetime.now())
     db.add(db_comment)
     db.commit()
+    db_chat = None
     if post.allow_comments == False:
         comment_current = db.query(models.Comment).filter(models.Comment.user_id == current_user.id).filter(models.Comment.post_id == post_id).order_by(models.Comment.id.desc()).first()
         if comment_current.approved_comment == False:
             db_chat = models.Chat(sender_id=current_user.id, receiver_id=post.user_id, post_id=post.id, comment_id=comment_current.id, timestamp=datetime.now())
             db.add(db_chat)
             db.commit()
-    return {"message": "Comment added successfully"}
+
+    chat_created = db.query(models.Chat).filter(models.Chat.id == db_chat.id).all()
+
+    if not chat_created:
+        raise HTTPException(status_code=404, detail="Chats not created")
+
+    response = [
+        {
+            "id": chat.id,
+            "post_id": chat.post_id,
+            "timestamp": chat.timestamp,
+            "comment_id": chat.comment_id,
+            "receiver_id": chat.receiver_id,
+            "sender_id": chat.sender_id,
+        }
+        for chat in chat_created
+    ]
+    return {
+        "message": "Comment added successfully",
+        "chat_data": response
+    }
 
 @router.put("/comment/{comment_id}/approve")
 def comment_approve(comment_id: int, comment: schemas.CommentApprove, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
