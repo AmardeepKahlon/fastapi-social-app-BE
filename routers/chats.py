@@ -11,12 +11,12 @@ router = APIRouter(
 )
 
 # Create a new chat API endpoint
-@router.post("/create_chat")
-def create_chat(chat: schemas.ChatCreate, receiver: schemas.ReceiverUser, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    db_chat = models.Chat(sender_id=current_user.id, receiver_id=receiver.id, post_id=chat.post_id, comment_id=chat.comment_id, timestamp=datetime.now())
-    db.add(db_chat)
-    db.commit()
-    return {"message": "Chat created successfully"}
+# @router.post("/create_chat")
+# def create_chat(chat: schemas.ChatCreate, receiver: schemas.ReceiverUser, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+#     db_chat = models.Chat(sender_id=current_user.id, receiver_id=receiver.id, post_id=chat.post_id, comment_id=chat.comment_id, timestamp=datetime.now())
+#     db.add(db_chat)
+#     db.commit()
+#     return {"message": "Chat created successfully"}
 
 # Get list of all chats API endpoint
 @router.get("/chats")
