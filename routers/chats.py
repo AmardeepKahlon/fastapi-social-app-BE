@@ -20,9 +20,9 @@ def create_chat(chat: schemas.ChatCreate, receiver: schemas.ReceiverUser, db: Se
 
 # Get list of all chats API endpoint
 @router.get("/chats")
-def get_chats(sender_id: int, db: Session = Depends(get_db)):
+def get_chats(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     subq = db.query(models.Chat.sender_id, models.Chat.receiver_id, func.max(models.Chat.timestamp).label("max_timestamp"))\
-             .filter((models.Chat.sender_id == sender_id) | (models.Chat.receiver_id == sender_id))\
+             .filter((models.Chat.sender_id == current_user.id) | (models.Chat.receiver_id == current_user.id))\
              .group_by(models.Chat.sender_id, models.Chat.receiver_id)\
              .subquery()
 
@@ -53,17 +53,17 @@ def get_chats(sender_id: int, db: Session = Depends(get_db)):
 
 # Get list of specific chats API endpoint
 @router.get("/chats/content")
-def get_chat(sender_id: int, receiver_id: int, db: Session = Depends(get_db)):
+def get_chat(receiver_id: int, db: Session = Depends(get_db),  current_user: models.User = Depends(get_current_user)):
     if (
         chats := db.query(models.Chat)
         .filter(
             (
-                (models.Chat.sender_id == sender_id)
+                (models.Chat.sender_id == current_user.id)
                 & (models.Chat.receiver_id == receiver_id)
             )
             | (
                 (models.Chat.sender_id == receiver_id)
-                & (models.Chat.receiver_id == sender_id)
+                & (models.Chat.receiver_id == current_user.id)
             )
         )
         .join(models.Chat.chat_comment)
