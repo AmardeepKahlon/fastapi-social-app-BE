@@ -22,6 +22,7 @@ router = APIRouter(
   tags=["Authentication"]
 )
 
+revoked_tokens = set()
 class OAuth2PasswordRequestForm:
     """
     This is a dependency class to collect the `username` and `password` as form data
@@ -156,6 +157,7 @@ class OAuth2PasswordRequestForm:
         self.scopes = scope.split()
         self.client_id = client_id
         self.client_secret = client_secret
+
 @router.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     if (
@@ -185,3 +187,10 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
     "user_name": user.name,
     "user_id": user.id
   }
+  
+@router.post("/logout")
+def logout(access_token: str, db: Session = Depends(get_db)):
+    if access_token in revoked_tokens:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token already revoked")
+    revoked_tokens.add(access_token)
+    return {"message": "Logout successful"}
