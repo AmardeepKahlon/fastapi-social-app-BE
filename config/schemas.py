@@ -59,7 +59,10 @@ class CommentCreate(BaseModel):
   
 class CommentApprove(BaseModel):
   approved_comment: Optional[bool] = None
-  
+
+class CommentApproveAsComment(BaseModel):
+  content: Optional[str] = None
+
 class LikeCreate(BaseModel):
   pass
   
