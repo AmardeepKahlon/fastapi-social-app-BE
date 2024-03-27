@@ -53,7 +53,7 @@ def get_chats(db: Session = Depends(get_db), current_user: models.User = Depends
 
 # Get list of specific chats API endpoint
 @router.get("/chats/content")
-def get_chat(receiver_id: int, db: Session = Depends(get_db),  current_user: models.User = Depends(get_current_user)):
+def get_chat_content(receiver_id: int, db: Session = Depends(get_db),  current_user: models.User = Depends(get_current_user)):
     if (
         chats := db.query(models.Chat)
         .filter(
