@@ -48,8 +48,9 @@ def approve_as_comment(comment_id: int, comment: schemas.CommentApproveAsComment
     db_comment = db.query(models.Comment).filter(models.Comment.id == comment_id).first()
     if not db_comment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
-    
-    if db.query(models.Post).filter(models.Post.id == db_comment.post_id).filter(models.Post.user_id) != current_user.id:
+    approver_user = db.query(models.Post).filter(models.Post.id == db_comment.post_id).filter(models.Post.user_id == current_user.id).all()
+    # print(approver_user)
+    if not approver_user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to update this comment")
     
     if comment is not None:
