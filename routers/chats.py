@@ -58,6 +58,8 @@ def get_chat(sender_id: int, receiver_id: int, db: Session = Depends(get_db)):
                 & (models.Chat.receiver_id == sender_id)
             )
         )
+        .join(models.Chat.chat_comment)
+        .filter(models.Comment.approved_comment == False)
         .all()
     ):
         return [
