@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 from config.database import get_db
 from config import models, schemas
@@ -20,11 +21,18 @@ def create_chat(chat: schemas.ChatCreate, receiver: schemas.ReceiverUser, db: Se
 # Get list of all chats API endpoint
 @router.get("/chats")
 def get_chats(sender_id: int, db: Session = Depends(get_db)):
+    subq = db.query(models.Chat.sender_id, models.Chat.receiver_id, func.max(models.Chat.timestamp).label("max_timestamp"))\
+             .filter((models.Chat.sender_id == sender_id) | (models.Chat.receiver_id == sender_id))\
+             .group_by(models.Chat.sender_id, models.Chat.receiver_id)\
+             .subquery()
+
     if (
         chats := db.query(models.Chat)
-        .filter(
-            (models.Chat.sender_id == sender_id)
-            | (models.Chat.receiver_id == sender_id)
+        .join(
+            subq,
+            (models.Chat.sender_id == subq.c.sender_id)
+            & (models.Chat.receiver_id == subq.c.receiver_id)
+            & (models.Chat.timestamp == subq.c.max_timestamp),
         )
         .options(
             joinedload(models.Chat.sender), joinedload(models.Chat.receiver)
@@ -36,12 +44,12 @@ def get_chats(sender_id: int, db: Session = Depends(get_db)):
                 "id": chat.id,
                 "sender": chat.sender,
                 "receiver": chat.receiver,
-                "timestamp": chat.timestamp
+                "timestamp": chat.timestamp,
             }
             for chat in chats
         ]
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")
+        raise HTTPException(status_code=404, detail="Chat not found")
 
 # Get list of specific chats API endpoint
 @router.get("/chats/content")
