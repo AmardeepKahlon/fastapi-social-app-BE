@@ -89,7 +89,21 @@ def approve_as_comment(comment_id: int, comment: schemas.CommentApproveAsComment
 
 @router.get("/posts/{post_id}/comments")
 def get_comments(post_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Comment).filter(models.Comment.post_id == post_id).filter((models.Comment.approved_comment == True) & (models.Comment.parent_comment_id == 0)).all()
+    top_level_comments = db.query(models.Comment)\
+                           .filter(models.Comment.post_id == post_id)\
+                           .filter(models.Comment.approved_comment == True)\
+                           .filter(models.Comment.parent_comment_id == 0)\
+                           .all()
+
+    for comment in top_level_comments:
+        child_comments = db.query(models.Comment)\
+                           .filter(models.Comment.post_id == post_id)\
+                           .filter(models.Comment.approved_comment == True)\
+                           .filter(models.Comment.parent_comment_id == comment.id)\
+                           .all()
+        comment.has_child_comments = bool(child_comments)
+
+    return top_level_comments
 
 @router.get("/parent_comment/{parent_comment_id}/comments")
 def get_comment_reply(comment_id: int, db: Session = Depends(get_db)):
