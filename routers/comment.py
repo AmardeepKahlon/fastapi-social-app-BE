@@ -39,8 +39,12 @@ def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depe
             "post_id": chat.post_id,
             "timestamp": chat.timestamp,
             "comment_id": chat.comment_id,
-            "receiver_id": chat.receiver_id,
-            "sender_id": chat.sender_id,
+            "receiver": {
+                "id": chat.receiver_id
+            },
+            "sender": {
+                "id": chat.sender_id
+            },
         }
         for chat in chat_created
     ]
