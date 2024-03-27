@@ -57,6 +57,9 @@ class CommentCreate(BaseModel):
   content: Optional[str] = None
   parent_comment_id: Optional[int] = None
   
+class CommentApprove(BaseModel):
+  approved_comment: Optional[bool] = None
+  
 class LikeCreate(BaseModel):
   pass
   

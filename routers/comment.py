@@ -28,6 +28,24 @@ def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depe
             db.commit()
     return {"message": "Comment added successfully"}
 
+@router.put("/comment/{comment_id}/approve")
+def comment_approve(comment_id: int, comment: schemas.CommentApprove, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    db_comment = db.query(models.Comment).filter(models.Comment.id == comment_id).first()
+    if not db_comment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+
+    # Check if the user has permission to update the comment
+    if db.query(models.Post).filter(models.Post.id == db_comment.post_id).filter(models.Post.user_id) != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to update this comment")
+
+    # Update the comment content and approved status if provided
+    if comment.approved_comment is not None:
+        db_comment.approved_comment = comment.approved_comment
+
+    db.commit()
+    return {"message": "Comment updated successfully"}
+
+
 @router.get("/posts/{post_id}/comments")
 def get_comments(post_id: int, db: Session = Depends(get_db)):
     return db.query(models.Comment).filter(models.Comment.post_id == post_id).all()
