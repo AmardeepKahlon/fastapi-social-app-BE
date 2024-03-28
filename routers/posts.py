@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from config.database import get_db
 from config import models, schemas
@@ -40,7 +41,7 @@ def create_post(allow_comments:bool, content:str, file: UploadFile = File(...), 
 @router.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     try:
-        if posts := db.query(models.Post).all():
+        if posts := db.query(models.Post).order_by(desc(models.Post.post_time)).all():
             return posts
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No posts found")
