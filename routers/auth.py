@@ -162,8 +162,11 @@ class OAuth2PasswordRequestForm:
 # Register user API endpoint
 @router.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    if not user.email or not user.name:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and name are required")
+    # print(user.email.name)
+    if not user.email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is required")
+    if not user.name:
+        user.name = user.email.name
     try:
         if (
             user_exists := db.query(models.User)
