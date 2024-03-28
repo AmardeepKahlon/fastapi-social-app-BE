@@ -22,7 +22,7 @@ def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depe
     db.add(db_comment)
     db.commit()
     db_chat = None
-    if post.allow_comments == False:
+    if not approved_comment:
         comment_current = db.query(models.Comment).filter(models.Comment.user_id == current_user.id).filter(models.Comment.post_id == post_id).order_by(models.Comment.id.desc()).first()
         if comment_current.approved_comment == False:
             db_chat = models.Chat(sender_id=current_user.id, receiver_id=post.user_id, post_id=post.id, comment_id=comment_current.id, timestamp=datetime.now())
