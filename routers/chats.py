@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 from config.database import get_db
@@ -20,11 +20,24 @@ router = APIRouter(
 
 # Get list of all chats API endpoint
 @router.get("/chats")
-def get_chats(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    subq = db.query(models.Chat.sender_id, models.Chat.receiver_id, func.max(models.Chat.timestamp).label("max_timestamp"))\
-             .filter((models.Chat.sender_id == current_user.id) | (models.Chat.receiver_id == current_user.id))\
-             .group_by(models.Chat.sender_id, models.Chat.receiver_id)\
-             .subquery()
+def get_chats(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    offset = (page - 1) * per_page
+
+    subq = db.query(
+        models.Chat.sender_id,
+        models.Chat.receiver_id,
+        func.max(models.Chat.timestamp).label("max_timestamp")
+    )\
+        .filter(
+            (models.Chat.sender_id == current_user.id) | (models.Chat.receiver_id == current_user.id)
+        )\
+        .group_by(models.Chat.sender_id, models.Chat.receiver_id)\
+        .subquery()
 
     if (
         chats := db.query(models.Chat)
@@ -35,51 +48,81 @@ def get_chats(db: Session = Depends(get_db), current_user: models.User = Depends
             & (models.Chat.timestamp == subq.c.max_timestamp),
         )
         .order_by(models.Chat.timestamp.desc())
+        .offset(offset)
+        .limit(per_page)
         .options(
             joinedload(models.Chat.sender), joinedload(models.Chat.receiver)
         )
         .all()
     ):
-        return [
-            {
-                "id": chat.id,
-                "sender": chat.sender,
-                "receiver": chat.receiver,
-                "timestamp": chat.timestamp,
-            }
-            for chat in chats
-        ]
+        chats = [
+                {
+                    "id": chat.id,
+                    "sender": chat.sender,
+                    "receiver": chat.receiver,
+                    "timestamp": chat.timestamp,
+                }
+                for chat in chats
+            ]
+        return {
+            "total_chats": len(chats),
+            "page_loaded": page,
+            "per_page": per_page,
+            "chats": chats
+        }
     else:
-        raise HTTPException(status_code=404, detail="Chat not found")
+        raise HTTPException(status_code=404, detail="No chats found")
 
 # Get list of specific chats API endpoint
 @router.get("/chats/content")
-def get_chat_content(receiver_id: int, db: Session = Depends(get_db),  current_user: models.User = Depends(get_current_user)):
-    if (
-        chats := db.query(models.Chat)
-        .filter(
-            (
-                (models.Chat.sender_id == current_user.id)
-                & (models.Chat.receiver_id == receiver_id)
-            )
-            | (
-                (models.Chat.sender_id == receiver_id)
-                & (models.Chat.receiver_id == current_user.id)
-            )
-        )
-        .join(models.Chat.chat_comment)
-        .filter(models.Comment.approved_comment == False)
-        .order_by(models.Comment.time_posted.desc())
-        .all()
-    ):
-        return [
+def get_chat_content(
+    receiver_id: int,
+    start_page: int = Query(1, ge=1),
+    num_pages: int = Query(1, ge=1),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    per_page = 15
+
+    all_chats = []
+
+    for page in range(start_page, start_page + num_pages):
+        offset = (page - 1) * per_page
+
+        query = db.query(models.Chat)\
+            .filter(
+                (
+                    (models.Chat.sender_id == current_user.id)
+                    & (models.Chat.receiver_id == receiver_id)
+                )
+                | (
+                    (models.Chat.sender_id == receiver_id)
+                    & (models.Chat.receiver_id == current_user.id)
+                )
+            )\
+            .join(models.Chat.chat_comment)\
+            .filter(models.Comment.approved_comment == False)\
+            .order_by(models.Comment.time_posted.desc())\
+            .offset(offset)\
+            .limit(per_page)\
+            .all()
+
+        all_chats.extend(query)
+
+    if not all_chats:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    return {
+        "total_chats": len(all_chats),
+        "pages_loaded": num_pages,
+        "per_page": per_page,
+        "chats": [
             {
                 "id": chat.id,
                 "post": chat.chat_post,
                 "comment": chat.chat_comment,
                 "timestamp": chat.timestamp,
             }
-            for chat in chats
+            for chat in all_chats
         ]
-    else:
-        raise HTTPException(status_code=404, detail="Chat not found")
+    }

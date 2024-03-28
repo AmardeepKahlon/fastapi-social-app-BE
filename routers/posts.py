@@ -1,6 +1,6 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from sqlalchemy import desc
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 from config.database import get_db
 from config import models, schemas
@@ -39,12 +39,32 @@ def create_post(allow_comments:bool, content:str, file: UploadFile = File(...), 
 
 # Get all posts API endpoint
 @router.get("/posts")
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    offset = (page - 1) * per_page
+
     try:
-        if posts := db.query(models.Post).order_by(desc(models.Post.post_time)).all():
-            return posts
+        if (
+            posts_with_likes := db.query(
+                models.Post, func.count(models.Like.id)
+            )
+            .outerjoin(models.Like, models.Post.id == models.Like.post_id)
+            .group_by(models.Post.id)
+            .order_by(desc(models.Post.post_time))
+            .offset(offset)
+            .limit(per_page)
+            .all()
+        ):
+            return [
+                {"post": post, "like_count": like_count}
+                for post, like_count in posts_with_likes
+            ]
         else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No posts found")
+            raise HTTPException(status_code=404, detail="No posts found")
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -54,7 +74,21 @@ def get_posts(db: Session = Depends(get_db)):
 # Get one specific post API endpoint
 @router.get("/posts/{post_id}")
 def get_post(post_id: int, db: Session = Depends(get_db)):
-    if post := db.query(models.Post).filter(models.Post.id == post_id).first():
-        return post
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    try:
+        post_with_likes = db.query(models.Post, func.count(models.Like.id))\
+            .outerjoin(models.Like, models.Post.id == models.Like.post_id)\
+            .filter(models.Post.id == post_id)\
+            .group_by(models.Post.id)\
+            .first()
+
+        if not post_with_likes:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+
+        post, like_count = post_with_likes
+
+        return {"post": post, "like_count": like_count}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error fetching post from database",
+        ) from e

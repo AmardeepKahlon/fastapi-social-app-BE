@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, requests, status
+from fastapi import APIRouter, Depends, HTTPException, Query, requests, status
 from sqlalchemy.orm import Session
 from config.database import get_db
 from config import models, schemas
@@ -92,35 +92,74 @@ def approve_as_comment(comment_id: int, comment: schemas.CommentApproveAsComment
 
 # Get list of all comments API endpoint
 @router.get("/comments")
-def get_comments(post_id: int, db: Session = Depends(get_db)):
-    top_level_comments = db.query(models.Comment)\
-                           .filter(models.Comment.post_id == post_id)\
-                           .filter(models.Comment.approved_comment == True)\
-                           .filter(models.Comment.parent_comment_id == 0)\
-                           .order_by(models.Comment.time_posted.desc())\
-                           .all()
+def get_comments(
+    post_id: int,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    offset = (page - 1) * per_page
 
-    for comment in top_level_comments:
-        child_comments = db.query(models.Comment)\
-                           .filter(models.Comment.post_id == post_id)\
-                           .filter(models.Comment.approved_comment == True)\
-                           .filter(models.Comment.parent_comment_id == comment.id)\
-                           .all()
-        comment.has_child_comments = bool(child_comments)
+    try:
+        top_level_comments = db.query(models.Comment)\
+            .filter(models.Comment.post_id == post_id)\
+            .filter(models.Comment.approved_comment == True)\
+            .filter(models.Comment.parent_comment_id == 0)\
+            .order_by(models.Comment.time_posted.desc())\
+            .offset(offset)\
+            .limit(per_page)\
+            .all()
 
-    return top_level_comments
+        for comment in top_level_comments:
+            child_comments = db.query(models.Comment)\
+                .filter(models.Comment.post_id == post_id)\
+                .filter(models.Comment.approved_comment == True)\
+                .filter(models.Comment.parent_comment_id == comment.id)\
+                .all()
+            comment.has_child_comments = bool(child_comments)
+
+        return {
+            "total_comments": len(top_level_comments),
+            "page_loaded": page,
+            "per_page": per_page,
+            "comments": top_level_comments,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error fetching comments from database",
+        ) from e
 
 # Get list of one specific comment's replies API endpoint
 @router.get("/comment/reply")
-def get_comment_reply(parent_comment_id: int, db: Session = Depends(get_db)):
-    if (
-        comments := db.query(models.Comment)
-        .filter(models.Comment.parent_comment_id == parent_comment_id)
-        .filter(models.Comment.approved_comment == True)
-        .order_by(models.Comment.time_posted.desc())
-        .all()
-    ):
-        return comments
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No comments found for the specified parent comment ID")
+def get_comment_reply(
+    parent_comment_id: int,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    # Calculate the offset for pagination
+    offset = (page - 1) * per_page
+
+    try:
+        # Query to retrieve paginated comment replies
+        comments = db.query(models.Comment)\
+            .filter(models.Comment.parent_comment_id == parent_comment_id)\
+            .filter(models.Comment.approved_comment == True)\
+            .order_by(models.Comment.time_posted.desc())\
+            .offset(offset)\
+            .limit(per_page)\
+            .all()
+
+        return {
+            "total_comments": len(comments),
+            "page_loaded": page,
+            "per_page": per_page,
+            "comments": comments,
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error fetching comment replies from database",
+        ) from e
     
