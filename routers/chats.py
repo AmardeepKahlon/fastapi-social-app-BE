@@ -69,6 +69,7 @@ def get_chat_content(receiver_id: int, db: Session = Depends(get_db),  current_u
         )
         .join(models.Chat.chat_comment)
         .filter(models.Comment.approved_comment == False)
+        .order_by(models.Comment.time_posted.desc())
         .all()
     ):
         return [
