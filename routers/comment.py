@@ -109,5 +109,13 @@ def get_comments(post_id: int, db: Session = Depends(get_db)):
 
 @router.get("/comment/reply")
 def get_comment_reply(parent_comment_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Comment).filter(models.Comment.parent_comment_id == parent_comment_id).filter(models.Comment.approved_comment == True).all()
+    if (
+        comments := db.query(models.Comment)
+        .filter(models.Comment.parent_comment_id == parent_comment_id)
+        .filter(models.Comment.approved_comment == True)
+        .all()
+    ):
+        return comments
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No comments found for the specified parent comment ID")
     
