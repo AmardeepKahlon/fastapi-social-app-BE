@@ -21,19 +21,29 @@ router = APIRouter(
 # Get list of all chats API endpoint
 @router.get("/chats")
 def get_chats(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    subq = db.query(models.Chat.sender_id, models.Chat.receiver_id, func.max(models.Chat.timestamp).label("max_timestamp"))\
-             .filter((models.Chat.sender_id == current_user.id) | (models.Chat.receiver_id == current_user.id))\
-             .group_by(models.Chat.sender_id, models.Chat.receiver_id)\
-             .subquery()
+    subq = db.query(
+        func.least(models.Chat.sender_id, models.Chat.receiver_id).label("first_id"),
+        func.greatest(models.Chat.sender_id, models.Chat.receiver_id).label("second_id"),
+        func.max(models.Chat.timestamp).label("max_timestamp")
+    )\
+    .filter(
+        (models.Chat.sender_id == current_user.id) | (models.Chat.receiver_id == current_user.id)
+    )\
+    .group_by("first_id", "second_id")\
+    .subquery()
 
     if (
         chats := db.query(models.Chat)
         .join(
             subq,
-            (models.Chat.sender_id == subq.c.sender_id)
-            & (models.Chat.receiver_id == subq.c.receiver_id)
-            & (models.Chat.timestamp == subq.c.max_timestamp),
+            func.least(models.Chat.sender_id, models.Chat.receiver_id) == subq.c.first_id,
         )
+        .join(
+            subq,
+            func.greatest(models.Chat.sender_id, models.Chat.receiver_id) == subq.c.second_id,
+        )
+        .filter(models.Chat.timestamp == subq.c.max_timestamp)
+        .order_by(models.Chat.timestamp.desc())
         .options(
             joinedload(models.Chat.sender), joinedload(models.Chat.receiver)
         )
