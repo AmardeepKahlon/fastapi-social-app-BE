@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, NameEmail
 from typing import List, Optional
 
 
@@ -33,7 +33,7 @@ class UserBase(BaseModel):
     Base schema for user data.
     """
     name: Optional[str] = None
-    email: str
+    email: NameEmail
     
 class ReceiverUser(BaseModel):
     """

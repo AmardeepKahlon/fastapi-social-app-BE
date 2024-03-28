@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 # from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import EmailStr
 from sqlalchemy.orm import Session
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -165,18 +164,15 @@ class OAuth2PasswordRequestForm:
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     if not user.email or not user.name:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and name are required")
-    if not isinstance(user.email, EmailStr):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email format")
-
     try:
         if (
             user_exists := db.query(models.User)
-            .filter(models.User.email == user.email)
+            .filter(models.User.email == user.email.email)
             .first()
         ):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
 
-        db_user = models.User(email=user.email, name=user.name)
+        db_user = models.User(email=user.email.email, name=user.name)
         db.add(db_user)
         db.commit()
         return {"message": "User created successfully"}
