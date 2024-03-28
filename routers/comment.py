@@ -94,6 +94,7 @@ def get_comments(post_id: int, db: Session = Depends(get_db)):
                            .filter(models.Comment.post_id == post_id)\
                            .filter(models.Comment.approved_comment == True)\
                            .filter(models.Comment.parent_comment_id == 0)\
+                           .order_by(models.Comment.time_posted.desc())\
                            .all()
 
     for comment in top_level_comments:
