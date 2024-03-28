@@ -115,6 +115,7 @@ class OAuth2PasswordBearer(OAuth2):
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+# Get current logged in user function
 def get_current_user(token: str = Depends(oauth2_scheme)):
 #   print("type===========>",type(token))
   # print("split====>",token)

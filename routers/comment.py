@@ -9,6 +9,7 @@ router = APIRouter(
   tags=["Comment"]
 )
 
+# Create comment API endpoint
 @router.post("/comment")
 def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     post = db.query(models.Post).filter(models.Post.id == post_id).first()
@@ -54,6 +55,7 @@ def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depe
         }
     return {"message": "Comment added successfully"}
 
+# Update comment through approval request API endpoint
 @router.put("/comment/approve")
 def comment_approve(comment_id: int, comment: schemas.CommentApprove, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     db_comment = db.query(models.Comment).filter(models.Comment.id == comment_id).first()
@@ -69,6 +71,7 @@ def comment_approve(comment_id: int, comment: schemas.CommentApprove, db: Sessio
     db.commit()
     return {"message": "Comment approved successfully"}
 
+# Create comment approval request as a comment API endpoint
 @router.post("/comment/approve_as_comment")
 def approve_as_comment(comment_id: int, comment: schemas.CommentApproveAsComment, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     db_comment = db.query(models.Comment).filter(models.Comment.id == comment_id).first()
@@ -87,7 +90,7 @@ def approve_as_comment(comment_id: int, comment: schemas.CommentApproveAsComment
         db.commit()
     return {"message": "Comment approved successfully"}
 
-
+# Get list of all comments API endpoint
 @router.get("/comments")
 def get_comments(post_id: int, db: Session = Depends(get_db)):
     top_level_comments = db.query(models.Comment)\
@@ -107,12 +110,14 @@ def get_comments(post_id: int, db: Session = Depends(get_db)):
 
     return top_level_comments
 
+# Get list of one specific comment's replies API endpoint
 @router.get("/comment/reply")
 def get_comment_reply(parent_comment_id: int, db: Session = Depends(get_db)):
     if (
         comments := db.query(models.Comment)
         .filter(models.Comment.parent_comment_id == parent_comment_id)
         .filter(models.Comment.approved_comment == True)
+        .order_by(models.Comment.time_posted.desc())
         .all()
     ):
         return comments

@@ -15,13 +15,15 @@ app = FastAPI()
 models.Base.metadata.create_all(engine)
 
 import cloudinary
-          
+
+# cloudinary configration to upload images
 cloudinary.config( 
   cloud_name = os.getenv('CLOUD_NAME'), 
   api_key = os.getenv('API_KEY'),
   api_secret = os.getenv('API_SECRET') 
 )
 
+# App middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,6 +32,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# App routes
 app.include_router(auth.router)
 app.include_router(posts.router)
 app.include_router(comment.router)

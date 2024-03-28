@@ -160,6 +160,7 @@ class OAuth2PasswordRequestForm:
         self.client_id = client_id
         self.client_secret = client_secret
 
+# Register user API endpoint
 @router.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     if not user.email or not user.name:
@@ -184,7 +185,8 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error creating user",
         ) from e
-  
+
+# Login user API endpoint
 @router.post("/login")
 def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
   user = db.query(User).filter(User.email == request.username).first()
@@ -202,6 +204,7 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
     "user_id": user.id
   }
   
+# Logout user API endpoint
 @router.post("/logout")
 def logout(access_token: str, db: Session = Depends(get_db)):
     if access_token in revoked_tokens:

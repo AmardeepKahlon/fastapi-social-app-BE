@@ -1,15 +1,27 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-    
+
 class PostBase(BaseModel):
+    """
+    Base schema for creating a post.
+    """
     content: str
     allow_comments: Optional[bool]
 
 class PostCreate(PostBase):
+    """
+    Schema for creating a post.
+    Inherits from PostBase.
+    """
     pass
 
 class Post(PostBase):
+    """
+    Schema for a post.
+    Inherits from PostBase.
+    Includes attributes for the post ID and owner ID.
+    """
     id: int
     owner_id: int
 
@@ -17,17 +29,31 @@ class Post(PostBase):
         from_attributes = True
 
 class UserBase(BaseModel):
+    """
+    Base schema for user data.
+    """
     name: Optional[str] = None
     email: str
     
 class ReceiverUser(BaseModel):
+    """
+    Schema for a receiver user.
+    """
     id: int
 
 class UserCreate(UserBase):
-    # password: Optional[str] = None
+    """
+    Schema for creating a user.
+    Inherits from UserBase.
+    """
     pass
 
 class User(UserBase):
+    """
+    Schema for a user.
+    Inherits from UserBase.
+    Includes attributes for the user ID and list of posts.
+    """
     id: int
     posts: List[Post] = []
 
@@ -35,37 +61,67 @@ class User(UserBase):
         from_attributes = True
   
 class Login(BaseModel):
-  email: str
-  password: Optional[str] = None
+    """
+    Schema for user login data.
+    """
+    email: str
+    password: Optional[str] = None
   
 class Token(BaseModel):
-  access_token: str
-  token_type: str
+    """
+    Schema for authentication token.
+    """
+    access_token: str
+    token_type: str
   
 class ImageFile(BaseModel):
-  upload_file: bytes
+    """
+    Schema for image file upload.
+    """
+    upload_file: bytes
   
 class TokenBearer(BaseModel):
-  token: str
+    """
+    Schema for authentication token.
+    """
+    token: str
   
 class TokenData(BaseModel):
-  email: Optional[str] = None
-  id: Optional[int] = None
-  name: Optional[str] = None
+    """
+    Schema for token data.
+    """
+    email: Optional[str] = None
+    id: Optional[int] = None
+    name: Optional[str] = None
   
 class CommentCreate(BaseModel):
-  content: Optional[str] = None
-  parent_comment_id: Optional[int] = None
+    """
+    Schema for creating a comment.
+    """
+    content: Optional[str] = None
+    parent_comment_id: Optional[int] = None
   
 class CommentApprove(BaseModel):
-  approved_comment: Optional[bool] = None
+    """
+    Schema for approving a comment.
+    """
+    approved_comment: Optional[bool] = None
 
 class CommentApproveAsComment(BaseModel):
-  content: Optional[str] = None
+    """
+    Schema for approving a comment as a comment.
+    """
+    content: Optional[str] = None
 
 class LikeCreate(BaseModel):
-  pass
+    """
+    Schema for creating a like.
+    """
+    pass
   
 class ChatCreate(BaseModel):
-  post_id: Optional[int] = None
-  comment_id: Optional[int] = None
+    """
+    Schema for creating a chat.
+    """
+    post_id: Optional[int] = None
+    comment_id: Optional[int] = None

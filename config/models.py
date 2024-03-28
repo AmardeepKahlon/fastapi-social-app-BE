@@ -5,6 +5,8 @@ from sqlalchemy_utils import URLType, EmailType
 
 from config.database import Base
 
+# Models for DB tables created in postgresql
+
 class User(Base):
   __tablename__ = 'users'
   id = Column(Integer, primary_key=True, index=True)

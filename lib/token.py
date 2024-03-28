@@ -16,12 +16,14 @@ load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
 
+# Create access token function
 def create_access_token(data: dict):
   to_encode = data.copy()
   expire = datetime.now() + timedelta(minutes=120)
   to_encode["exp"] = expire
   return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+# Verify access token function
 def verify_token(token: str, credentials_exception):
   # sourcery skip: avoid-builtin-shadow
   try:
