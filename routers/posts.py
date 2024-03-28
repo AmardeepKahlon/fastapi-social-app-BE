@@ -58,10 +58,16 @@ def get_posts(
             .limit(per_page)
             .all()
         ):
-            return [
-                {"post": post, "like_count": like_count}
-                for post, like_count in posts_with_likes
-            ]
+            posts = [
+                    {"post": post, "like_count": like_count}
+                    for post, like_count in posts_with_likes
+                ]
+            return {
+                "total_posts": len(posts),
+                "pages_loaded": page,
+                "per_page": per_page,
+                "posts": posts
+            }
         else:
             raise HTTPException(status_code=404, detail="No posts found")
 
