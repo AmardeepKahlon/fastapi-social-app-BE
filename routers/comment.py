@@ -28,30 +28,31 @@ def add_comment(post_id: int, comment: schemas.CommentCreate, db: Session = Depe
             db.add(db_chat)
             db.commit()
 
-    chat_created = db.query(models.Chat).filter(models.Chat.id == db_chat.id).all()
+        chat_created = db.query(models.Chat).filter(models.Chat.id == db_chat.id).all()
 
-    if not chat_created:
-        raise HTTPException(status_code=404, detail="Chats not created")
+        if not chat_created:
+            raise HTTPException(status_code=404, detail="Chats not created")
 
-    response = [
-        {
-            "id": chat.id,
-            "post_id": chat.post_id,
-            "timestamp": chat.timestamp,
-            "comment_id": chat.comment_id,
-            "receiver": {
-                "id": chat.receiver_id
-            },
-            "sender": {
-                "id": chat.sender_id
-            },
+        response = [
+            {
+                "id": chat.id,
+                "post_id": chat.post_id,
+                "timestamp": chat.timestamp,
+                "comment_id": chat.comment_id,
+                "receiver": {
+                    "id": chat.receiver_id
+                },
+                "sender": {
+                    "id": chat.sender_id
+                },
+            }
+            for chat in chat_created
+        ]
+        return {
+            "message": "Comment added successfully",
+            "chat_data": response
         }
-        for chat in chat_created
-    ]
-    return {
-        "message": "Comment added successfully",
-        "chat_data": response
-    }
+    return {"message": "Comment added successfully"}
 
 @router.put("/comment/approve")
 def comment_approve(comment_id: int, comment: schemas.CommentApprove, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
