@@ -165,25 +165,22 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     # print(user.email.name)
     if not user.email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is required")
-    if not user.name:
+    if not user.name or user.name == "":
         user.name = user.email.name
-    try:
-        if (
-            user_exists := db.query(models.User)
-            .filter(models.User.email == user.email.email)
-            .first()
-        ):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+    elif not user.name.strip() or user.name.isdigit():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid name")
 
-        db_user = models.User(email=user.email.email, name=user.name)
-        db.add(db_user)
-        db.commit()
-        return {"message": "User created successfully"}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error creating user",
-        ) from e
+    if (
+        user_exists := db.query(models.User)
+        .filter(models.User.email == user.email.email)
+        .first()
+    ):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+
+    db_user = models.User(email=user.email.email, name=user.name)
+    db.add(db_user)
+    db.commit()
+    return {"message": "User created successfully"}
 
 # Login user API endpoint
 @router.post("/login")
