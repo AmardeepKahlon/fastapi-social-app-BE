@@ -8,7 +8,7 @@ router = APIRouter(
   tags=["Like"]
 )
 
-@router.post("/posts/like")
+@router.post("/like")
 def like_post(post_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if not post:
@@ -18,7 +18,12 @@ def like_post(post_id: int, db: Session = Depends(get_db), current_user: models.
     db.commit()
     return {"message": "Post liked successfully"}
 
-@router.delete("/posts/like")
+@router.get("/like/count")
+def get_like_count(post_id: int, db: Session = Depends(get_db)):
+    like_count = db.query(models.Like).filter(models.Like.post_id == post_id).count()
+    return {"like_count": like_count}
+
+@router.delete("/like")
 def unlike_post(post_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     like = db.query(models.Like).filter(models.Like.user_id == current_user.id, models.Like.post_id == post_id).first()
     if not like:
