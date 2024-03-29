@@ -1,6 +1,7 @@
 from datetime import datetime
+from math import ceil
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from sqlalchemy import desc, func
+from sqlalchemy import desc, distinct, func
 from sqlalchemy.orm import Session
 from config.database import get_db
 from config import models, schemas
@@ -48,23 +49,37 @@ def get_posts(
 
     try:
         if (
-            posts_with_likes := db.query(
-                models.Post, func.count(models.Like.id)
+            posts_with_counts := db.query(
+                models.Post,
+                func.count(distinct(models.Like.id)).label("like_count"),
+                func.count(models.Comment.id).label("comment_count"),
             )
             .outerjoin(models.Like, models.Post.id == models.Like.post_id)
+            .outerjoin(
+                models.Comment, models.Post.id == models.Comment.post_id
+            )
             .group_by(models.Post.id)
             .order_by(desc(models.Post.post_time))
             .offset(offset)
             .limit(per_page)
             .all()
         ):
+            total_posts = db.query(models.Post).count()
+
+            total_pages = ceil(total_posts / per_page)
+
             posts = [
-                    {"post": post, "like_count": like_count}
-                    for post, like_count in posts_with_likes
-                ]
+                {
+                    "post": post,
+                    "like_count": like_count,
+                    "comment_count": comment_count
+                }
+                for post, like_count, comment_count in posts_with_counts
+            ]
             return {
                 "total_posts": len(posts),
-                "pages_loaded": page,
+                "total_pages": total_pages,
+                "page_loaded": page,
                 "per_page": per_page,
                 "posts": posts
             }

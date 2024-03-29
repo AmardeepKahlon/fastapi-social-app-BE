@@ -1,4 +1,5 @@
 from datetime import datetime
+from math import ceil
 from fastapi import APIRouter, Depends, HTTPException, Query, requests, status
 from sqlalchemy.orm import Session
 from config.database import get_db
@@ -101,6 +102,12 @@ def get_comments(
     offset = (page - 1) * per_page
 
     try:
+        total_comments = db.query(models.Comment)\
+            .filter(models.Comment.post_id == post_id)\
+            .filter(models.Comment.approved_comment == True)\
+            .filter(models.Comment.parent_comment_id == 0)\
+            .count()
+            
         top_level_comments = db.query(models.Comment)\
             .filter(models.Comment.post_id == post_id)\
             .filter(models.Comment.approved_comment == True)\
@@ -110,6 +117,8 @@ def get_comments(
             .limit(per_page)\
             .all()
 
+        total_pages = ceil(total_comments / per_page)
+        
         for comment in top_level_comments:
             child_comments = db.query(models.Comment)\
                 .filter(models.Comment.post_id == post_id)\
@@ -120,6 +129,7 @@ def get_comments(
 
         return {
             "total_comments": len(top_level_comments),
+            "total_pages": total_pages,
             "page_loaded": page,
             "per_page": per_page,
             "comments": top_level_comments,
@@ -138,11 +148,14 @@ def get_comment_reply(
     per_page: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
-    # Calculate the offset for pagination
     offset = (page - 1) * per_page
 
     try:
-        # Query to retrieve paginated comment replies
+        total_comments = db.query(models.Comment)\
+            .filter(models.Comment.parent_comment_id == parent_comment_id)\
+            .filter(models.Comment.approved_comment == True)\
+            .count()
+            
         comments = db.query(models.Comment)\
             .filter(models.Comment.parent_comment_id == parent_comment_id)\
             .filter(models.Comment.approved_comment == True)\
@@ -151,8 +164,11 @@ def get_comment_reply(
             .limit(per_page)\
             .all()
 
+        total_pages = ceil(total_comments / per_page)
+        
         return {
             "total_comments": len(comments),
+            "total_pages": total_pages,
             "page_loaded": page,
             "per_page": per_page,
             "comments": comments,

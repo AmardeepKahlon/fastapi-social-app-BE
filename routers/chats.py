@@ -1,4 +1,5 @@
 from datetime import datetime
+from math import ceil
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
@@ -39,6 +40,17 @@ def get_chats(
         .group_by(models.Chat.sender_id, models.Chat.receiver_id)\
         .subquery()
 
+    total_chats = db.query(models.Chat)\
+        .join(
+            subq,
+            (models.Chat.sender_id == subq.c.sender_id)
+            & (models.Chat.receiver_id == subq.c.receiver_id)
+            & (models.Chat.timestamp == subq.c.max_timestamp),
+        )\
+        .count()
+
+    total_pages = ceil(total_chats / per_page)
+    
     if (
         chats := db.query(models.Chat)
         .join(
@@ -66,6 +78,7 @@ def get_chats(
             ]
         return {
             "total_chats": len(chats),
+            "total_pages": total_pages,
             "page_loaded": page,
             "per_page": per_page,
             "chats": chats
@@ -77,44 +90,59 @@ def get_chats(
 @router.get("/chats/content")
 def get_chat_content(
     receiver_id: int,
-    start_page: int = Query(1, ge=1),
-    num_pages: int = Query(1, ge=1),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    per_page = 15
-
     all_chats = []
 
-    for page in range(start_page, start_page + num_pages):
-        offset = (page - 1) * per_page
+    offset = (page - 1) * per_page
 
-        query = db.query(models.Chat)\
-            .filter(
-                (
-                    (models.Chat.sender_id == current_user.id)
-                    & (models.Chat.receiver_id == receiver_id)
-                )
-                | (
-                    (models.Chat.sender_id == receiver_id)
-                    & (models.Chat.receiver_id == current_user.id)
-                )
-            )\
-            .join(models.Chat.chat_comment)\
-            .filter(models.Comment.approved_comment == False)\
-            .order_by(models.Comment.time_posted.desc())\
-            .offset(offset)\
-            .limit(per_page)\
-            .all()
+    query = db.query(models.Chat)\
+        .filter(
+            (
+                (models.Chat.sender_id == current_user.id)
+                & (models.Chat.receiver_id == receiver_id)
+            )
+            | (
+                (models.Chat.sender_id == receiver_id)
+                & (models.Chat.receiver_id == current_user.id)
+            )
+        )\
+        .join(models.Chat.chat_comment)\
+        .filter(models.Comment.approved_comment == False)\
+        .order_by(models.Comment.time_posted.desc())\
+        .offset(offset)\
+        .limit(per_page)\
+        .all()
 
-        all_chats.extend(query)
+    all_chats.extend(query)
 
+    total_chats = db.query(models.Chat)\
+        .filter(
+            (
+                (models.Chat.sender_id == current_user.id)
+                & (models.Chat.receiver_id == receiver_id)
+            )
+            | (
+                (models.Chat.sender_id == receiver_id)
+                & (models.Chat.receiver_id == current_user.id)
+            )
+        )\
+        .join(models.Chat.chat_comment)\
+        .filter(models.Comment.approved_comment == False)\
+        .count()
+
+    total_pages = ceil(total_chats / per_page)
+    
     if not all_chats:
         raise HTTPException(status_code=404, detail="Chat not found")
 
     return {
         "total_chats": len(all_chats),
-        "pages_loaded": num_pages,
+        "toatal_pages": total_pages,
+        "page_loaded": page,
         "per_page": per_page,
         "chats": [
             {
