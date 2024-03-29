@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = os.getenv("POSTGRES_URI")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URI")
 if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
 
@@ -21,19 +21,3 @@ def get_db():
     yield db
   finally:
     db.close()
-    
-
-# from pymongo.mongo_client import MongoClient
-# from pymongo.server_api import ServerApi
-
-# uri = os.getenv("MONGODB_URI")
-
-# # Create a new client and connect to the server
-# client = MongoClient(uri, server_api=ServerApi('1'))
-
-# # Send a ping to confirm a successful connection
-# try:
-#     client.admin.command('ping')
-#     print("Pinged your deployment. You successfully connected to MongoDB!")
-# except Exception as e:
-#     print(e)

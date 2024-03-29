@@ -12,18 +12,18 @@ load_dotenv()
 
 app = FastAPI()
 
-models.Base.metadata.create_all(engine)
+# models.Base.metadata.create_all(engine)
 
 import cloudinary
 
-# cloudinary configration to upload images
+'''cloudinary configration to upload images'''
 cloudinary.config( 
   cloud_name = os.getenv('CLOUD_NAME'), 
   api_key = os.getenv('API_KEY'),
   api_secret = os.getenv('API_SECRET') 
 )
 
-# App middleware
+'''App middleware'''
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,15 +32,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# App routes
+'''App routes'''
 app.include_router(auth.router)
 app.include_router(posts.router)
 app.include_router(comment.router)
 app.include_router(like.router)
 app.include_router(chats.router)
-
-@app.get("/api")
-async def Hello():
-  return {"message": "Hello"}
-
 # app.include_router(user.router)
